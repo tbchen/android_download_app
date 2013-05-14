@@ -1,0 +1,15 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources xmlns:xliff="urn:oasis:names:tc:xliff:document:1.2">
+
+    <string name="app_name">download</string>
+    <string name="tab_browser">Browser</string>
+    <string name="tab_downloads">Downloads</string>
+    <string name="tab_files">Files</string>
+    <string name="tab_settings">Settings</string>
+    
+    <!-- Settings fragment -->
+    <string name="settings_passcode_lock">Passcode Lock</string>
+    <string name="settings_home_page">Home Page</string>
+    <string name="settings_home_page_dialog_title">Home Page</string>
+	<string name="settings_help">Help</string>    
+</resources>
