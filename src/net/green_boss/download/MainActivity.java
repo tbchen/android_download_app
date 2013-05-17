@@ -15,24 +15,11 @@
  */
 package net.green_boss.download;
 
-import net.green_boss.download.fragment.BrowserFragment;
 import android.app.ActionBar;
 import android.app.ActionBar.Tab;
 import android.app.Activity;
 import android.app.FragmentTransaction;
-import android.graphics.Bitmap;
-import android.graphics.Bitmap.Config;
-import android.graphics.Canvas;
-import android.graphics.Picture;
-import android.graphics.drawable.PictureDrawable;
 import android.os.Bundle;
-import android.view.View;
-import android.view.ViewGroup;
-import android.webkit.WebView;
-import android.widget.BaseAdapter;
-import android.widget.GridView;
-import android.widget.ImageView;
-import android.widget.LinearLayout;
 import android.widget.Toast;
 
 /**
@@ -46,9 +33,6 @@ public class MainActivity extends Activity implements
 	public static final String TAB_TAG_FILES = "tabTagFiles";
 	public static final String TAB_TAG_SETTINGS = "tabTagSettings";
 	private ActionBar mActionBar;
-	private LinearLayout mContent;
-	private GridView mGridView;
-	private BaseAdapter mAdapter;
 
 	// public BrowserFragment mBrowserFragment;
 	// public DownloadsFragment mDownloadsFragment;
@@ -58,15 +42,9 @@ public class MainActivity extends Activity implements
 	// private void addTab(String tag,) {
 	// bffb4
 	// }
-
-	private static Bitmap pictureDrawable2Bitmap(PictureDrawable pictureDrawable) {
-		Bitmap bitmap = Bitmap.createBitmap(
-		/* pictureDrawable.getIntrinsicWidth() */100,
-		/* pictureDrawable.getIntrinsicHeight() */300, Config.ARGB_8888);
-		Canvas canvas = new Canvas(bitmap);
-		canvas.drawPicture(pictureDrawable.getPicture());
-		return bitmap;
-	}
+    public FragmentFactory getFragmentFactory(){
+        return mFragmentFactory;
+    }
 
 	@Override
 	protected void onCreate(Bundle savedInstanceState) {
@@ -106,53 +84,7 @@ public class MainActivity extends Activity implements
 		settingsTab.setTag(TAB_TAG_SETTINGS);
 		mActionBar.addTab(settingsTab);
 
-		mContent = (LinearLayout) findViewById(R.id.content);
-		mGridView = (GridView) findViewById(R.id.grid_view);// new
-															// GridView(this);
-		mAdapter = new BaseAdapter() {
 
-			@Override
-			public View getView(int position, View arg1, ViewGroup arg2) {
-				BrowserFragment bf = mFragmentFactory.getBrowserFragmentList()
-						.get(position);
-				WebView wv = bf.getWebView();
-				Picture p = wv.capturePicture();
-				Bitmap bmp = null;
-				try {
-					bmp = pictureDrawable2Bitmap(new PictureDrawable(p));
-					// FileOutputStream out = new FileOutputStream(filename);
-					// bmp.compress(Bitmap.CompressFormat.PNG, 90, out);
-					// out.close();
-				} catch (Exception e) {
-					e.printStackTrace();
-				}
-				ImageView iv = new ImageView(MainActivity.this);
-				if (bmp != null)
-					iv.setImageBitmap(bmp);
-				return iv;
-			}
-
-			@Override
-			public long getItemId(int arg0) {
-				return 0;
-			}
-
-			@Override
-			public Object getItem(int arg0) {
-				// TODO Auto-generated method stub
-				return null;
-			}
-
-			@Override
-			public int getCount() {
-				return mFragmentFactory.getBrowserFragmentList().size();
-			}
-
-			// public void change() {
-			// notifyDataSetChanged();
-			// }
-		};
-		mGridView.setAdapter(mAdapter);
 		// DownloadFragment
 		// TabListener<DownloadsFragment> downloadsTabListener = new
 		// TabListener<DownloadsFragment>(
@@ -289,17 +221,5 @@ public class MainActivity extends Activity implements
 	public void onTabUnselected(Tab tab, FragmentTransaction ft) {
 	}
 
-	public void listTabs() {
-		// hide the browser view
-		// mFragmentFactory.
-		// show select tab view
-		if (mContent.getVisibility() == View.VISIBLE) {
-			mContent.setVisibility(View.GONE);
-			mGridView.setVisibility(View.VISIBLE);
-			mAdapter.notifyDataSetChanged();
-		} else {
-			mContent.setVisibility(View.VISIBLE);
-			mGridView.setVisibility(View.GONE);
-		}
-	}
+
 }

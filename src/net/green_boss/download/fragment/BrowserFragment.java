@@ -1,5 +1,10 @@
 package net.green_boss.download.fragment;
 
+import android.graphics.Bitmap;
+import android.graphics.Canvas;
+import android.graphics.Picture;
+import android.graphics.drawable.PictureDrawable;
+import android.widget.*;
 import net.green_boss.download.MainActivity;
 import net.green_boss.download.R;
 import android.app.Fragment;
@@ -14,31 +19,21 @@ import android.webkit.WebChromeClient;
 import android.webkit.WebSettings;
 import android.webkit.WebView;
 import android.webkit.WebViewClient;
-import android.widget.Button;
-import android.widget.EditText;
-import android.widget.GridView;
-import android.widget.LinearLayout;
-import android.widget.ProgressBar;
 
-/**
- * A simple {@link android.support.v4.app.Fragment} subclass. Activities that
- * contain this fragment must implement the
- * {@link BrowserFragment.OnFragmentInteractionListener} interface to handle
- * interaction events. Use the {@link BrowserFragment#newInstance} factory
- * method to create an instance of this fragment.
- * 
- */
 public class BrowserFragment extends Fragment {
-	public static final String URL = "url";
-	private LinearLayout mBrowserLayout;
-	private GridView mWebViewListGridView;
-	private String mUrl;
+	//public static final String URL = "url";
+	//private LinearLayout mBrowserLayout;
+	//private GridView mWebViewListGridView;
+	//private String mUrl;
 	private WebView mWebView;
 	private Button mGoButton;
 	private EditText mAddress;
 	private View mRootView;
 	private ProgressBar mProgressBar;
 	private MainActivity mActivity;
+    private LinearLayout mContent;
+    private GridView mGridView;
+    private BaseAdapter mAdapter;
 
 	public WebView getWebView() {
 		return mWebView;
@@ -48,13 +43,22 @@ public class BrowserFragment extends Fragment {
 	public void onCreate(Bundle savedInstanceState) {
 		super.onCreate(savedInstanceState);
 		mActivity = (MainActivity) getActivity();
-		if (getArguments() != null) {
-			mUrl = getArguments().getString(URL);
-		}
+	//	if (getArguments() != null) {
+			//mUrl = getArguments().getString(URL);
+	//	}
 		// set has option menu
 		setHasOptionsMenu(true);
 		setRetainInstance(true);
 	}
+
+    private static Bitmap pictureDrawable2Bitmap(PictureDrawable pictureDrawable) {
+        Bitmap bitmap = Bitmap.createBitmap(
+		/* pictureDrawable.getIntrinsicWidth() */100,
+		/* pictureDrawable.getIntrinsicHeight() */300, Bitmap.Config.ARGB_8888);
+        Canvas canvas = new Canvas(bitmap);
+        canvas.drawPicture(pictureDrawable.getPicture());
+        return bitmap;
+    }
 
 	@Override
 	public View onCreateView(LayoutInflater inflater, ViewGroup container,
@@ -112,10 +116,56 @@ public class BrowserFragment extends Fragment {
 				}
 			});
 
-			mBrowserLayout = (LinearLayout) mRootView
-					.findViewById(R.id.browser_layout);
+			//mBrowserLayout = (LinearLayout) mRootView
+			//		.findViewById(R.id.browser_layout);
 
-			mWebView.capturePicture();
+            mContent = (LinearLayout) mRootView.findViewById(R.id.browser_layout);
+            mGridView = (GridView) mRootView.findViewById(R.id.grid_layout);
+            mAdapter = new BaseAdapter() {
+
+                @Override
+                public View getView(int position, View arg1, ViewGroup arg2) {
+                    BrowserFragment bf = mActivity.getFragmentFactory().getBrowserFragmentList()
+                            .get(position);
+                    WebView wv = bf.getWebView();
+                    Picture p = wv.capturePicture();
+                    Bitmap bmp = null;
+                    try {
+                        bmp = pictureDrawable2Bitmap(new PictureDrawable(p));
+                        // FileOutputStream out = new FileOutputStream(filename);
+                        // bmp.compress(Bitmap.CompressFormat.PNG, 90, out);
+                        // out.close();
+                    } catch (Exception e) {
+                        e.printStackTrace();
+                    }
+                    ImageView iv = new ImageView(mActivity);
+                    if (bmp != null)
+                        iv.setImageBitmap(bmp);
+                    return iv;
+                }
+
+                @Override
+                public long getItemId(int arg0) {
+                    return 0;
+                }
+
+                @Override
+                public Object getItem(int arg0) {
+                    // TODO Auto-generated method stub
+                    return null;
+                }
+
+                @Override
+                public int getCount() {
+                    return mActivity.getFragmentFactory().getBrowserFragmentList().size();
+                }
+
+                // public void change() {
+                // notifyDataSetChanged();
+                // }
+            };
+            mGridView.setAdapter(mAdapter);
+			//mWebView.capturePicture();
 			// mBrowserLayout.setVisibility(View.GONE);
 
 			// mWebViewListGridView = (GridView) mRootView
@@ -180,10 +230,23 @@ public class BrowserFragment extends Fragment {
 			}
 			break;
 		case R.id.action_settings:
-			mActivity.listTabs();
+			listTabs();
 			break;
 		}
 		return super.onOptionsItemSelected(item);
 	}
 
+    public void listTabs() {
+        // hide the browser view
+        // mFragmentFactory.
+        // show select tab view
+        if (mContent.getVisibility() == View.VISIBLE) {
+            mContent.setVisibility(View.GONE);
+            mGridView.setVisibility(View.VISIBLE);
+            mAdapter.notifyDataSetChanged();
+        } else {
+            mContent.setVisibility(View.VISIBLE);
+            mGridView.setVisibility(View.GONE);
+        }
+    }
 }
