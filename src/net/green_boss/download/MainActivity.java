@@ -28,20 +28,23 @@ import android.widget.Toast;
  */
 public class MainActivity extends Activity implements
 		android.app.ActionBar.TabListener {
+    //tab tag name
 	public static final String TAB_TAG_BROWSER = "tabTagBrowser";
 	public static final String TAB_TAG_DOWNLOADS = "tabTagDownloads";
 	public static final String TAB_TAG_FILES = "tabTagFiles";
 	public static final String TAB_TAG_SETTINGS = "tabTagSettings";
 	private ActionBar mActionBar;
+    public static MainActivity instance;
 
-	// public BrowserFragment mBrowserFragment;
-	// public DownloadsFragment mDownloadsFragment;
+    private final static String[] TAGS = {TAB_TAG_BROWSER,TAB_TAG_DOWNLOADS,TAB_TAG_FILES,TAB_TAG_SETTINGS};
+    private final static int[] ICONS = {
+            R.drawable.ic_menu_mapmode,
+            R.drawable.ic_menu_attachment,
+            R.drawable.ic_menu_archive,
+            R.drawable.ic_menu_preferences};
 	private final FragmentFactory mFragmentFactory = new FragmentFactory(
 			getFragmentManager());
 
-	// private void addTab(String tag,) {
-	// bffb4
-	// }
     public FragmentFactory getFragmentFactory(){
         return mFragmentFactory;
     }
@@ -49,6 +52,7 @@ public class MainActivity extends Activity implements
 	@Override
 	protected void onCreate(Bundle savedInstanceState) {
 		super.onCreate(savedInstanceState);
+        instance = this;
 		setContentView(R.layout.activity_main);
 		mActionBar = getActionBar();
 		mActionBar.setNavigationMode(ActionBar.NAVIGATION_MODE_TABS);
@@ -56,147 +60,23 @@ public class MainActivity extends Activity implements
 		mActionBar.setDisplayShowHomeEnabled(false);
 		mActionBar.setDisplayShowTitleEnabled(false);
 
-		// BrownserFragment
-		// TabListener<BrowserFragment> browserTabListener = new
-		// TabListener<BrowserFragment>(
-		// this, getString(R.string.tab_browser), BrowserFragment.class);
-		Tab browserTab = mActionBar.newTab();
-		browserTab.setIcon(R.drawable.ic_menu_mapmode);
-		browserTab.setTabListener(this);
-		browserTab.setTag(TAB_TAG_BROWSER);
-		mActionBar.addTab(browserTab);
-
-		Tab downloadTab = mActionBar.newTab();
-		downloadTab.setIcon(R.drawable.ic_menu_mapmode);
-		downloadTab.setTabListener(this);
-		downloadTab.setTag(TAB_TAG_DOWNLOADS);
-		mActionBar.addTab(downloadTab);
-
-		Tab filesTab = mActionBar.newTab();
-		filesTab.setIcon(R.drawable.ic_menu_mapmode);
-		filesTab.setTabListener(this);
-		filesTab.setTag(TAB_TAG_FILES);
-		mActionBar.addTab(filesTab);
-
-		Tab settingsTab = mActionBar.newTab();
-		settingsTab.setIcon(R.drawable.ic_menu_mapmode);
-		settingsTab.setTabListener(this);
-		settingsTab.setTag(TAB_TAG_SETTINGS);
-		mActionBar.addTab(settingsTab);
-
-
-		// DownloadFragment
-		// TabListener<DownloadsFragment> downloadsTabListener = new
-		// TabListener<DownloadsFragment>(
-		// this, getString(R.string.tab_downloads),
-		// DownloadsFragment.class);
-		// Tab downloadsTab = mActionBar.newTab();
-		// // downloadsTab.setText(getString(R.string.tab_downloads));
-		// downloadsTab.setIcon(R.drawable.ic_menu_attachment);
-		// downloadsTab.setTabListener(downloadsTabListener);
-		// mActionBar.addTab(downloadsTab);
-		// // mDownloadsFragment = (DownloadsFragment)
-		// // downloadsTabListener.mFragment;
-		//
-		// // FilesFragment
-		// mActionBar.addTab(mActionBar
-		// .newTab()
-		// // .setText(getString(R.string.tab_files))
-		// .setIcon(R.drawable.ic_menu_archive)
-		// .setTabListener(
-		// new TabListener<FilesFragment>(this,
-		// getString(R.string.tab_files),
-		// FilesFragment.class)));
-		//
-		// // SettingsFragment
-		// mActionBar.addTab(mActionBar
-		// .newTab()
-		// // .setText(getString(R.string.tab_files))
-		// .setIcon(R.drawable.ic_menu_preferences)
-		// .setTabListener(
-		// new TabListener<SettingsFragment>(this,
-		// getString(R.string.tab_files),
-		// SettingsFragment.class)));
-		// mActionBar.addTab(mActionBar
-		// .newTab()
-		// .setText(getString(R.string.tab_settings))
-		// .setTabListener(
-		// new TabListener<SettingsFragment>(this,
-		// getString(R.string.tab_settings),
-		// SettingsFragment.class)));
-		// if (savedInstanceState != null) {
-		// bar.setSelectedNavigationItem(savedInstanceState.getInt("tab", 0));
-		// }
+        // add tabs
+        for(int i=0;i<TAGS.length;i++){
+            addTab(TAGS[i],ICONS[i]);
+        }
 	}
 
-	// @Override
-	// protected void onSaveInstanceState(Bundle outState) {
-	// super.onSaveInstanceState(outState);
-	// outState.putInt("tab", getActionBar().getSelectedNavigationIndex());
-	// }
+    /**
+     * add tab to action bar
+     */
+    private void addTab(String tag, int icon){
+        Tab tab = mActionBar.newTab();
+        tab.setIcon(icon);
+        tab.setTabListener(this);
+        tab.setTag(tag);
+        mActionBar.addTab(tab);
+    }
 
-	// public static class TabListener<T extends Fragment> implements
-	// ActionBar.TabListener {
-	// private final Activity mActivity;
-	// private final String mTag;
-	// private final Class<T> mClass;
-	// private final Bundle mArgs;
-	// public Fragment mFragment;
-	//
-	// public TabListener(Activity activity, String tag, Class<T> clz) {
-	// this(activity, tag, clz, null);
-	// }
-	//
-	// public TabListener(Activity activity, String tag, Class<T> clz,
-	// Bundle args) {
-	// mActivity = activity;
-	// mTag = tag;
-	// mClass = clz;
-	// mArgs = args;
-	//
-	// // Check to see if we already have a fragment for this tab, probably
-	// // from a previously saved state. If so, deactivate it, because our
-	// // initial state is that a tab isn't shown.
-	// mFragment = mActivity.getFragmentManager().findFragmentByTag(mTag);
-	// if (mFragment != null && !mFragment.isDetached()) {
-	// FragmentTransaction ft = mActivity.getFragmentManager()
-	// .beginTransaction();
-	// ft.detach(mFragment);
-	// ft.commit();
-	// } else {
-	// FragmentTransaction ft = mActivity.getFragmentManager()
-	// .beginTransaction();
-	// mFragment = Fragment.instantiate(mActivity, mClass.getName(),
-	// mArgs);
-	// ft.add(android.R.id.content, mFragment, mTag);
-	// ft.detach(mFragment);
-	// ft.commit();
-	// }
-	// }
-	//
-	// @Override
-	// public void onTabSelected(Tab tab, FragmentTransaction ft) {
-	// if (mFragment == null) {
-	// mFragment = Fragment.instantiate(mActivity, mClass.getName(),
-	// mArgs);
-	// ft.add(android.R.id.content, mFragment, mTag);
-	// } else {
-	// ft.attach(mFragment);
-	// }
-	// }
-	//
-	// @Override
-	// public void onTabUnselected(Tab tab, FragmentTransaction ft) {
-	// if (mFragment != null) {
-	// ft.detach(mFragment);
-	// }
-	// }
-	//
-	// @Override
-	// public void onTabReselected(Tab tab, FragmentTransaction ft) {
-	// Toast.makeText(mActivity, "Reselected!", Toast.LENGTH_SHORT).show();
-	// }
-	// }
 
 	// --------tab listener--------
 	@Override

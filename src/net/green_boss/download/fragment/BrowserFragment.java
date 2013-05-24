@@ -1,56 +1,58 @@
 package net.green_boss.download.fragment;
 
+import android.app.Fragment;
+import android.content.Context;
 import android.graphics.Bitmap;
 import android.graphics.Canvas;
 import android.graphics.Picture;
 import android.graphics.drawable.PictureDrawable;
-import android.widget.*;
-import net.green_boss.download.MainActivity;
-import net.green_boss.download.R;
-import android.app.Fragment;
 import android.os.Bundle;
-import android.view.LayoutInflater;
-import android.view.Menu;
-import android.view.MenuInflater;
-import android.view.MenuItem;
-import android.view.View;
-import android.view.ViewGroup;
+import android.os.Message;
+import android.util.Log;
+import android.view.*;
 import android.webkit.WebChromeClient;
 import android.webkit.WebSettings;
 import android.webkit.WebView;
 import android.webkit.WebViewClient;
+import android.widget.*;
+import net.green_boss.download.MainActivity;
+import net.green_boss.download.R;
 
 public class BrowserFragment extends Fragment {
-	//public static final String URL = "url";
-	//private LinearLayout mBrowserLayout;
-	//private GridView mWebViewListGridView;
-	//private String mUrl;
+    private String TAG = BrowserFragment.class.getSimpleName();
 	private WebView mWebView;
 	private Button mGoButton;
 	private EditText mAddress;
 	private View mRootView;
 	private ProgressBar mProgressBar;
-	private MainActivity mActivity;
-    private LinearLayout mContent;
+    private LinearLayout mBrowserLayout;
     private GridView mGridView;
     private BaseAdapter mAdapter;
 
+    /**
+     * get web view
+     * @return web view
+     */
 	public WebView getWebView() {
+        initViews();
 		return mWebView;
 	}
 
 	@Override
 	public void onCreate(Bundle savedInstanceState) {
 		super.onCreate(savedInstanceState);
-		mActivity = (MainActivity) getActivity();
-	//	if (getArguments() != null) {
-			//mUrl = getArguments().getString(URL);
-	//	}
+
 		// set has option menu
 		setHasOptionsMenu(true);
 		setRetainInstance(true);
 	}
 
+    /**
+     * convert picture to bitmap
+     * @param pictureDrawable
+     * @return bitmap
+     * TODO:TBA
+     */
     private static Bitmap pictureDrawable2Bitmap(PictureDrawable pictureDrawable) {
         Bitmap bitmap = Bitmap.createBitmap(
 		/* pictureDrawable.getIntrinsicWidth() */100,
@@ -60,148 +62,169 @@ public class BrowserFragment extends Fragment {
         return bitmap;
     }
 
+    /**
+     * init views
+     */
+    private void initViews(){
+        if (mRootView == null) {
+            LayoutInflater inflater = (LayoutInflater)MainActivity.instance.getSystemService
+                    (Context.LAYOUT_INFLATER_SERVICE);
+
+            //root view
+            mRootView = inflater.inflate(R.layout.fragment_browser, null,
+                    false);
+
+            //progress bar
+            mProgressBar = (ProgressBar) mRootView
+                    .findViewById(R.id.progress_bar);
+            //hide progress bar
+            mProgressBar.setVisibility(View.GONE);
+
+            //web view
+            mWebView = (WebView) mRootView.findViewById(R.id.web_view);
+            //set web view client
+            mWebView.setWebViewClient(getWebViewClient());
+            //set web view chrome client
+            mWebView.setWebChromeClient(getWebChromeClient());
+            //set settings
+            setWebViewSettings();
+            //load url
+//			mWebView.loadUrl("http://www.nikon-image.com/support/manual/m_pdf_select.htm");
+            mWebView.loadUrl("http://10.0.2.2/chen/files.html");
+            // mWebView.loadUrl(mUrl);
+
+            //address text
+            mAddress = (EditText) mRootView.findViewById(R.id.address);
+            //TODO:TBA
+
+            //GO button(TODO:to be delete,replace by ime done button)
+            mGoButton = (Button) mRootView.findViewById(R.id.go);
+            mGoButton.setOnClickListener(new View.OnClickListener() {
+
+                @Override
+                public void onClick(View v) {
+                    mWebView.loadUrl(mAddress.getText().toString());
+                }
+            });
+
+            //browser layout
+            mBrowserLayout = (LinearLayout) mRootView.findViewById(R.id.browser_layout);
+
+            //grid view(browser tab select)
+            mGridView = (GridView) mRootView.findViewById(R.id.grid_layout);
+            //grid view adapter
+            initAdapter();
+            //set adapter
+            mGridView.setAdapter(mAdapter);
+            //hide grid view
+            mGridView.setVisibility(View.GONE);
+        }
+    }
+
+    /**
+     * get new web view client
+     * @return
+     */
+    private WebViewClient getWebViewClient(){
+        return new WebViewClient() {
+
+            @Override
+            public boolean shouldOverrideUrlLoading(WebView view, String url) {
+                mAddress.setText(url);
+                if (url.endsWith(".pdf")) {
+                    // mActivity.mDownloadsFragment.add(url);
+                    // mActivity.mDownloadsFragment.mListView.getAdapter().
+                    return true;
+                }
+                return super.shouldOverrideUrlLoading(view, url);
+            }
+
+        };
+    }
+
+    private WebChromeClient getWebChromeClient(){
+        return new WebChromeClient() {
+
+            @Override
+            public void onProgressChanged(WebView view, int newProgress) {
+                if (newProgress == 100) {
+                    mProgressBar.setVisibility(View.GONE);
+                } else {
+                    mProgressBar.setVisibility(View.VISIBLE);
+                    mProgressBar.setProgress(newProgress);
+                }
+                super.onProgressChanged(view, newProgress);
+            }
+
+            @Override
+            public boolean onCreateWindow(WebView view, boolean isDialog, boolean isUserGesture, Message resultMsg) {
+                //WebView childView = new WebView(getActivity());
+                WebView childView = MainActivity.instance.getFragmentFactory().getBrowserFragment().getWebView();
+                //print browser fragment size
+                Log.d(TAG,"browser fragment size:" + MainActivity.instance.getFragmentFactory().getBrowserFragmentList().size());
+                //final WebSettings settings = childView.getSettings();
+                //settings.setJavaScriptEnabled(true);
+                //childView.setWebChromeClient(this);
+                WebView.WebViewTransport transport = (WebView.WebViewTransport) resultMsg.obj;
+                transport.setWebView(childView);
+                resultMsg.sendToTarget();
+                return true;
+            }
+        };
+    }
+
+    private void setWebViewSettings(){
+        WebSettings settings = mWebView.getSettings();
+        settings.setJavaScriptEnabled(true);
+        settings.setSupportMultipleWindows(true);
+    }
+
+    private void initAdapter(){
+        mAdapter = new BaseAdapter() {
+            @Override
+            public View getView(int position, View arg1, ViewGroup arg2) {
+                BrowserFragment bf = MainActivity.instance.getFragmentFactory().getBrowserFragmentList()
+                        .get(position);
+                WebView wv = bf.getWebView();
+                Picture p = wv.capturePicture();
+                Bitmap bmp = null;
+                try {
+                    bmp = pictureDrawable2Bitmap(new PictureDrawable(p));
+                    // FileOutputStream out = new FileOutputStream(filename);
+                    // bmp.compress(Bitmap.CompressFormat.PNG, 90, out);
+                    // out.close();
+                } catch (Exception e) {
+                    e.printStackTrace();
+                }
+                ImageView iv = new ImageView(MainActivity.instance);
+                if (bmp != null)
+                    iv.setImageBitmap(bmp);
+                return iv;
+            }
+
+            @Override
+            public long getItemId(int arg0) {
+                return 0;
+            }
+
+            @Override
+            public Object getItem(int arg0) {
+                // TODO Auto-generated method stub
+                return null;
+            }
+
+            @Override
+            public int getCount() {
+                return MainActivity.instance.getFragmentFactory().getBrowserFragmentList().size();
+            }
+        };
+    }
+
 	@Override
 	public View onCreateView(LayoutInflater inflater, ViewGroup container,
 			Bundle savedInstanceState) {
 		// Inflate the layout for this fragment
-		if (mRootView == null) {
-			mRootView = inflater.inflate(R.layout.fragment_browser, container,
-					false);
-			mProgressBar = (ProgressBar) mRootView
-					.findViewById(R.id.progress_bar);
-			mProgressBar.setVisibility(View.GONE);
-			mWebView = (WebView) mRootView.findViewById(R.id.web_view);
-			mWebView.setWebViewClient(new WebViewClient() {
-
-				@Override
-				public boolean shouldOverrideUrlLoading(WebView view, String url) {
-					mAddress.setText(url);
-					if (url.endsWith(".pdf")) {
-						// mActivity.mDownloadsFragment.add(url);
-						// mActivity.mDownloadsFragment.mListView.getAdapter().
-						return true;
-					}
-					return super.shouldOverrideUrlLoading(view, url);
-				}
-
-			});
-
-			mWebView.setWebChromeClient(new WebChromeClient() {
-
-				@Override
-				public void onProgressChanged(WebView view, int newProgress) {
-					if (newProgress == 100) {
-						mProgressBar.setVisibility(View.GONE);
-					} else {
-						mProgressBar.setVisibility(View.VISIBLE);
-						mProgressBar.setProgress(newProgress);
-					}
-					super.onProgressChanged(view, newProgress);
-				}
-
-			});
-			WebSettings settings = mWebView.getSettings();
-			settings.setJavaScriptEnabled(true);
-			mWebView.loadUrl("http://www.nikon-image.com/support/manual/m_pdf_select.htm");
-
-			// mWebView.loadUrl(mUrl);
-			mAddress = (EditText) mRootView.findViewById(R.id.address);
-
-			mGoButton = (Button) mRootView.findViewById(R.id.go);
-			mGoButton.setOnClickListener(new View.OnClickListener() {
-
-				@Override
-				public void onClick(View v) {
-					mWebView.loadUrl(mAddress.getText().toString());
-				}
-			});
-
-			//mBrowserLayout = (LinearLayout) mRootView
-			//		.findViewById(R.id.browser_layout);
-
-            mContent = (LinearLayout) mRootView.findViewById(R.id.browser_layout);
-            mGridView = (GridView) mRootView.findViewById(R.id.grid_layout);
-            mAdapter = new BaseAdapter() {
-
-                @Override
-                public View getView(int position, View arg1, ViewGroup arg2) {
-                    BrowserFragment bf = mActivity.getFragmentFactory().getBrowserFragmentList()
-                            .get(position);
-                    WebView wv = bf.getWebView();
-                    Picture p = wv.capturePicture();
-                    Bitmap bmp = null;
-                    try {
-                        bmp = pictureDrawable2Bitmap(new PictureDrawable(p));
-                        // FileOutputStream out = new FileOutputStream(filename);
-                        // bmp.compress(Bitmap.CompressFormat.PNG, 90, out);
-                        // out.close();
-                    } catch (Exception e) {
-                        e.printStackTrace();
-                    }
-                    ImageView iv = new ImageView(mActivity);
-                    if (bmp != null)
-                        iv.setImageBitmap(bmp);
-                    return iv;
-                }
-
-                @Override
-                public long getItemId(int arg0) {
-                    return 0;
-                }
-
-                @Override
-                public Object getItem(int arg0) {
-                    // TODO Auto-generated method stub
-                    return null;
-                }
-
-                @Override
-                public int getCount() {
-                    return mActivity.getFragmentFactory().getBrowserFragmentList().size();
-                }
-
-                // public void change() {
-                // notifyDataSetChanged();
-                // }
-            };
-            mGridView.setAdapter(mAdapter);
-			//mWebView.capturePicture();
-			// mBrowserLayout.setVisibility(View.GONE);
-
-			// mWebViewListGridView = (GridView) mRootView
-			// .findViewById(R.id.grid_layout);
-			//
-			// mWebViewListGridView.setAdapter(new BaseAdapter() {
-			//
-			// @Override
-			// public View getView(int arg0, View arg1, ViewGroup arg2) {
-			// // TODO Auto-generated method stub
-			// WebView v = new WebView(getActivity());// mWebView;
-			// v.loadUrl("http://m.yahoo.co.jp");
-			// // TextView v = new TextView(getActivity());
-			// // v.setText("test");
-			// return v;
-			// }
-			//
-			// @Override
-			// public long getItemId(int arg0) {
-			// // TODO Auto-generated method stub
-			// return 0;
-			// }
-			//
-			// @Override
-			// public Object getItem(int arg0) {
-			// // TODO Auto-generated method stub
-			// return null;
-			// }
-			//
-			// @Override
-			// public int getCount() {
-			// // TODO Auto-generated method stub
-			// return 4;
-			// }
-			// });
-		}
+		initViews();
 		return mRootView;
 	}
 
@@ -236,16 +259,16 @@ public class BrowserFragment extends Fragment {
 		return super.onOptionsItemSelected(item);
 	}
 
-    public void listTabs() {
+    private void listTabs() {
         // hide the browser view
         // mFragmentFactory.
         // show select tab view
-        if (mContent.getVisibility() == View.VISIBLE) {
-            mContent.setVisibility(View.GONE);
+        if (mBrowserLayout.getVisibility() == View.VISIBLE) {
+            mBrowserLayout.setVisibility(View.GONE);
             mGridView.setVisibility(View.VISIBLE);
             mAdapter.notifyDataSetChanged();
         } else {
-            mContent.setVisibility(View.VISIBLE);
+            mBrowserLayout.setVisibility(View.VISIBLE);
             mGridView.setVisibility(View.GONE);
         }
     }

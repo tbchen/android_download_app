@@ -1,15 +1,15 @@
 package net.green_boss.download;
 
-import java.util.ArrayList;
-import java.util.List;
-
+import android.app.Fragment;
+import android.app.FragmentManager;
+import android.app.FragmentTransaction;
 import net.green_boss.download.fragment.BrowserFragment;
 import net.green_boss.download.fragment.DownloadsFragment;
 import net.green_boss.download.fragment.FilesFragment;
 import net.green_boss.download.fragment.SettingsFragment;
-import android.app.Fragment;
-import android.app.FragmentManager;
-import android.app.FragmentTransaction;
+
+import java.util.ArrayList;
+import java.util.List;
 
 public class FragmentFactory {
 	private final List<BrowserFragment> browserFragmentList = new ArrayList<BrowserFragment>();
@@ -17,7 +17,7 @@ public class FragmentFactory {
 	private SettingsFragment sf;
 	private FilesFragment ff;
 	public static final int MAX_TABS = 4;
-	private int currentBrowserFragmentIndex = 0;
+    private BrowserFragment mCurrentBrowserFragment;
 	private final FragmentManager fm;
 
 	public enum FragmentType {
@@ -92,39 +92,18 @@ public class FragmentFactory {
 			ft.detach(currentFragment);
 		}
 		BrowserFragment bf;
-		if (browserFragmentList.size() <= 0) {
-			bf = new BrowserFragment();
-			browserFragmentList.add(bf);
-			currentBrowserFragmentIndex = 0;
-			ft.add(R.id.content, bf, null);
-		} else {
-			bf = browserFragmentList.get(currentBrowserFragmentIndex);
-			ft.attach(bf);
+		if (browserFragmentList.size() >= MAX_TABS) {
+            browserFragmentList.remove(mCurrentBrowserFragment);
+            ft.remove(mCurrentBrowserFragment);
 		}
-		ft.commit();
+        bf = new BrowserFragment();
+        browserFragmentList.add(bf);
+        ft.add(R.id.content,bf,null);
+        mCurrentBrowserFragment = bf;
+        ft.commit();
 		currentFragmentType = FragmentType.BROWSER;
 		return bf;
 	}
-
-	// private BrowserFragment getCurrentBrowserFragment() {
-	// BrowserFragment bf;
-	// if (browserFragmentList.size() < MAX_TABS) {
-	// bf = new BrowserFragment();
-	// browserFragmentList.add(bf);
-	// ft.add(android.R.id.content, bf, null);
-	// } else {
-	// bf = getNextBrowserFragment();
-	// ft.attach(bf);
-	// }
-	// }
-	//
-	// private BrowserFragment getNextBrowserFragment() {
-	// if (currentBrowserFragmentIndex == MAX_TABS - 1) {
-	// return browserFragmentList.get(0);
-	// } else {
-	// return browserFragmentList.get(currentBrowserFragmentIndex + 1);
-	// }
-	// }
 
 	private Fragment getCurrentFragment() {
 		if (currentFragmentType == FragmentType.UNKNOWN) {
@@ -144,8 +123,8 @@ public class FragmentFactory {
 		}
 
 		if (currentFragmentType == FragmentType.BROWSER) {
-			return browserFragmentList.get(currentBrowserFragmentIndex);
-		}
+		    return mCurrentBrowserFragment;
+        }
 
 		return null;
 	}
